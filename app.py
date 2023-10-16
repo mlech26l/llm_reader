@@ -41,6 +41,16 @@ class TextApp:
         )
         self.open_button.pack(side="left", padx=5)
 
+        label = ttk.Label(self.top_frame, text="Select model: ")
+        label.pack(side="left", padx=5)
+        self.combobox = ttk.Combobox(
+            self.top_frame, values=["ChatGPT", "GPT-4", "Claude 2"], state="readonly"
+        )
+        # set a default value
+        self.combobox.set("ChatGPT")
+        self.combobox.pack(side="left", padx=5)
+        self.combobox.bind("<<ComboboxSelected>>", self.select_model)
+
         # You can add more buttons to this frame if needed.
 
         font_tuple = ("Calibri", 16, "normal")
@@ -94,6 +104,12 @@ class TextApp:
             self.button_orig,
             self.entry_widget,
         ]
+
+    def select_model(self, event):
+        # Get the selected item from combobox
+        selected_model = self.combobox.get()
+        print(f"[GUI]: Selected model is {selected_model}")
+        self.personalizer.set_model(selected_model)
 
     def disable_widgets(self):
         self.text_box.config(state=tk.NORMAL)

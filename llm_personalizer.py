@@ -16,12 +16,16 @@ class Personalizer:
     def __init__(self, content):
         self.content = content
         self.style = ""
+        self.model = "chatgpt"
         self.pointer_start = 0
         self.pointer_end = 0
         self.advance_end_pointer()
         self._styled_section = None
         self.llm = LLM()
         self.pointer_stack = []
+
+    def set_model(self, model):
+        self.model = model.lower().replace("-", "").strip()
 
     def set_style(self, style):
         self.style = style
@@ -42,7 +46,7 @@ class Personalizer:
                 {"role": "user", "content": "Content to rephrase: " + self.section},
             ]
             print("[Peronalizer]: Querying LLM for styled selection")
-            self.llm.query(messages, callback)
+            self.llm.query(self.model, messages, callback)
 
     def advance_section(self):
         self.pointer_stack.append(self.pointer_start)
@@ -64,7 +68,7 @@ class Personalizer:
     def advance_end_pointer(self):
         words = 0
         chars = 0
-        while self.pointer_end < len(self.content) and words < 300 and chars < 20000:
+        while self.pointer_end < len(self.content) and words < 400 and chars < 30000:
             if self.content[self.pointer_end] == " ":
                 words += 1
             self.pointer_end += 1

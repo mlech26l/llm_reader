@@ -5,12 +5,14 @@ import time
 import anthropic
 
 
-def hash_messages(messages):
-    return hash("\n".join([m["role"] + ": " + m["content"] for m in messages]))
+def hash_messages(model, messages):
+    return hash(
+        model + "::" + "\n".join([m["role"] + ": " + m["content"] for m in messages])
+    )
 
 
 class LLM:
-    def __init__(self, model="gpt-3.5-turbo"):
+    def __init__(self):
         if "OPENAI_ORG" not in os.environ or "OPENAI_API_KEY" not in os.environ:
             raise Exception(
                 "Missing OPENAI_ORG or OPENAI_API_KEY environment variable."
@@ -18,7 +20,11 @@ class LLM:
         self.claude_api_key = os.getenv("CLAUDE_API_KEY", None)
         openai.organization = os.getenv("OPENAI_ORG")
         openai.api_key = os.getenv("OPENAI_API_KEY")
-        self.model_name = model
+        self.call_fns = {
+            "chatgpt": self.call_chatgpt,
+            "gpt4": self.call_gpt4,
+            "claude 2": self.call_claude,
+        }
         self._cached_replies = {}
 
     def call_claude(self, messages, key, callback):
@@ -37,9 +43,15 @@ class LLM:
         self._cached_replies[key] = completion
         callback(completion)
 
-    def call_gpt(self, messages, key, callback):
+    def call_gpt4(self, messages, key, callback):
+        response = openai.ChatCompletion.create(model="gpt-4", messages=messages)
+        reply = response["choices"][0]["message"]["content"]
+        self._cached_replies[key] = reply
+        callback(reply)
+
+    def call_chatgpt(self, messages, key, callback):
         response = openai.ChatCompletion.create(
-            model=self.model_name, messages=messages
+            model="gpt-3.5-turbo", messages=messages
         )
         reply = response["choices"][0]["message"]["content"]
         self._cached_replies[key] = reply
@@ -51,8 +63,8 @@ class LLM:
         # print("calling fake llm")
         # callback("Placeholder text with style " + style + " and content " + content)
 
-    def query(self, messages, callback):
-        key = hash_messages(messages)
+    def query(self, model, messages, callback):
+        key = hash_messages(model, messages)
         msg = messages[-1]["content"][0 : min(80, len(messages[-1]["content"]))] + "..."
         if key in self._cached_replies:
             print(f"[LLM layer]: Found request ({msg}) in cache")
@@ -66,8 +78,9 @@ class LLM:
             # callback("Placeholder text with style " + style + " and content " + content)
             #
             # self.call_llm(messages, key, callback)
+
             thread = threading.Thread(
-                target=self.call_claude,
+                target=self.call_fns[model],
                 args=(messages, key, callback),
             )
             thread.start()
