@@ -47,7 +47,7 @@ class TextApp:
             self.top_frame, values=["ChatGPT", "GPT-4", "Claude 2"], state="readonly"
         )
         # set a default value
-        self.combobox.set("ChatGPT")
+        self.combobox.set("Claude 2")
         self.combobox.pack(side="left", padx=5)
         self.combobox.bind("<<ComboboxSelected>>", self.select_model)
 

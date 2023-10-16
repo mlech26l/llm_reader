@@ -3,13 +3,14 @@ import os
 
 from llm_api import LLM
 
-SYSTEM_PROMPT = "You are a helpful AI assistant that rephrases text into a \
-different style that your user prefers. \
-Never output the input text without any modification. \
-Only rephrase the next, do not provide more information beyond the user content. \
+SYSTEM_PROMPT = "You are a helpful AI assistant that rephrases text to a \
+different writing style. \
+The target style of the text is defined by the user. \
 For instance, the user may request the documented to be rephrased into a more engaging or simpler langauge. \
 Your output should only contain the modified original text without any confirmation of the request or further question. \
-Note that the text may contain text artifacts from parsing the document, simply ignore them."
+Never output the input text without any modification. \
+Only rephrase the next, do not provide more information beyond the user content unless the user requests it. \
+Note that the text may contain text artifacts from parsing the document, such as page numbers, page headings, or table of contents, simply ignore these artifacts."
 
 
 class Personalizer:
@@ -42,7 +43,11 @@ class Personalizer:
         else:
             messages = [
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": "Rephrase preference: " + self.style},
+                {
+                    "role": "user",
+                    "content": "Rephrase the text to the following user instructions: "
+                    + self.style,
+                },
                 {"role": "user", "content": "Content to rephrase: " + self.section},
             ]
             print("[Peronalizer]: Querying LLM for styled selection")
@@ -68,7 +73,7 @@ class Personalizer:
     def advance_end_pointer(self):
         words = 0
         chars = 0
-        while self.pointer_end < len(self.content) and words < 400 and chars < 30000:
+        while self.pointer_end < len(self.content) and words < 1000 and chars < 40000:
             if self.content[self.pointer_end] == " ":
                 words += 1
             self.pointer_end += 1
