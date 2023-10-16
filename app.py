@@ -50,7 +50,10 @@ class TextApp:
 
         # Frame for widgets at the bottom
         self.bottom_frame = ttk.Frame(self.root)
-        self.bottom_frame.grid(row=2, column=0, sticky="ew")
+        self.bottom_frame.grid(row=3, column=0, sticky="ew")
+
+        self.style_label = tk.Label(self.root, text="Current style: ")
+        self.style_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
 
         # Some buttons
         self.button_prev = ttk.Button(
@@ -65,9 +68,13 @@ class TextApp:
             self.bottom_frame, text="Next", command=self.click_next
         )
         self.button_gen.pack(side="left", padx=5)
+        self.button_orig = ttk.Button(
+            self.bottom_frame, text="Original", command=self.click_orig
+        )
+        self.button_orig.pack(side="left", padx=5)
 
         entry_frame = ttk.Frame(root)
-        entry_frame.grid(row=3, column=0, sticky="ew")
+        entry_frame.grid(row=4, column=0, sticky="ew")
         entry_frame.grid_columnconfigure(
             1, weight=1
         )  # Entry widget should expand with window resizing
@@ -84,9 +91,15 @@ class TextApp:
             self.button_gen,
             self.button_next,
             self.button_prev,
+            self.button_orig,
+            self.entry_widget,
         ]
 
     def disable_widgets(self):
+        self.text_box.config(state=tk.NORMAL)
+        self.text_box.delete(1.0, tk.END)
+        self.text_box.insert(tk.END, "Generating...")
+        self.text_box.config(state=tk.DISABLED)
         for widget in self.active_widgets:
             widget.config(state=tk.DISABLED)
 
@@ -94,38 +107,38 @@ class TextApp:
         for widget in self.active_widgets:
             widget.config(state=tk.NORMAL)
 
+    def click_orig(self):
+        self.text_box.config(state=tk.NORMAL)
+        self.text_box.delete(1.0, tk.END)
+        self.text_box.insert(tk.END, self.personalizer.section)
+        self.text_box.config(state=tk.DISABLED)
+
     def click_generate(self, event=None):
+        print("[GUI]: Send text sent to personalizer.")
         self.disable_widgets()
         text = self.entry_widget.get()
         self.personalizer.set_style(text)
-        self.text_box.delete(1.0, tk.END)
-        self.text_box.insert(tk.END, "Generating...")
+        self.style_label.config(text="Current style: " + text)
         self.personalizer.query_styled_selection(callback=self.set_main_text)
-        print("Text sent to personalizer.")
 
     def click_next(self):
+        print("[GUI]: Send text sent to personalizer.")
         self.disable_widgets()
         self.personalizer.advance_section()
-        self.text_box.delete(1.0, tk.END)
-        self.text_box.insert(tk.END, "Generating...")
         self.personalizer.query_styled_selection(callback=self.set_main_text)
-        print("Text sent to personalizer.")
 
     def click_prev(self):
+        print("[GUI]: Send text sent to personalizer.")
         self.disable_widgets()
         self.personalizer.retreat_section()
-        self.text_box.delete(1.0, tk.END)
-        self.text_box.insert(tk.END, "Generating...")
         self.personalizer.query_styled_selection(callback=self.set_main_text)
-
-        print("Text sent to personalizer.")
 
     def set_main_text(self, text):
         # print("Callback called -> set text to:", text)
         # print("Callback called -> set text to:", text[0 : min(20, len(text))])
-        print("===== SET main TEXT =====")
-        print(text)
-        print("===========================")
+        print("[GUI] Received text of length", len(text), "characters")
+        # print(text)
+        # print("===========================")
         self.enable_widgets()
         self.text_box.config(state=tk.NORMAL)
         self.text_box.delete(1.0, tk.END)
@@ -142,16 +155,14 @@ class TextApp:
         )
         if filepath:
             content = read_file(filepath)
-            print("Read file with length", len(content))
+            print("[GUI}: Read file with length", len(content))
             if content == "":
                 messagebox.showerror("Error", "Could not read file!")
             else:
+                print("[GUI]: Send text sent to personalizer.")
                 self.disable_widgets()
-                self.text_box.delete(1.0, tk.END)
                 self.personalizer = Personalizer(content)
-                self.text_box.insert(tk.END, "Generating...")
                 self.personalizer.query_styled_selection(callback=self.set_main_text)
-                print("Text sent to personalizer XX.")
 
             # self.text_box.insert(tk.END, file.read())
 
