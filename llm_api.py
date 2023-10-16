@@ -13,13 +13,16 @@ def hash_messages(model, messages):
 
 class LLM:
     def __init__(self):
-        if "OPENAI_ORG" not in os.environ or "OPENAI_API_KEY" not in os.environ:
+        has_openai = "OPENAI_ORG" in os.environ and "OPENAI_API_KEY" in os.environ
+        has_anthropic = "CLAUDE_API_KEY" in os.environ
+
+        if not (has_openai or has_anthropic):
             raise Exception(
-                "Missing OPENAI_ORG or OPENAI_API_KEY environment variable."
+                "Missing OPENAI_ORG & OPENAI_API_KEY or CLAUDE_API_KEY environment variable."
             )
         self.claude_api_key = os.getenv("CLAUDE_API_KEY", None)
-        openai.organization = os.getenv("OPENAI_ORG")
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        openai.organization = os.getenv("OPENAI_ORG","")
+        openai.api_key = os.getenv("OPENAI_API_KEY","")
         self.call_fns = {
             "chatgpt": self.call_chatgpt,
             "gpt4": self.call_gpt4,
