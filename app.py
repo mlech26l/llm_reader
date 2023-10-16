@@ -5,6 +5,7 @@ import fitz
 from tkinter import messagebox, scrolledtext
 
 from llm_personalizer import Personalizer
+from tts import TTS
 
 
 def read_file(filename):
@@ -25,9 +26,10 @@ def read_file(filename):
 class TextApp:
     def __init__(self, root):
         self.personalizer = None
+        self.tts = TTS()
         self.root = root
         root.geometry("900x700")
-        self.root.title("LLM Content Personalizer")
+        self.root.title("LLM Document Personalizer")
 
         # Configure grid weights to ensure that second row expands with window resizing
         root.grid_rowconfigure(1, weight=1)
@@ -82,6 +84,10 @@ class TextApp:
             self.bottom_frame, text="Original", command=self.click_orig
         )
         self.button_orig.pack(side="left", padx=5)
+        self.button_play = ttk.Button(
+            self.bottom_frame, text="Play", command=self.click_play
+        )
+        self.button_play.pack(side="left", padx=5)
 
         entry_frame = ttk.Frame(root)
         entry_frame.grid(row=4, column=0, sticky="ew")
@@ -102,6 +108,7 @@ class TextApp:
             self.button_next,
             self.button_prev,
             self.button_orig,
+            self.button_play,
             self.entry_widget,
         ]
 
@@ -122,6 +129,12 @@ class TextApp:
     def enable_widgets(self):
         for widget in self.active_widgets:
             widget.config(state=tk.NORMAL)
+
+    def click_play(self):
+        # text in Textbox
+        text = self.text_box.get(1.0, tk.END)
+        if len(text) > 20:
+            self.tts.generate_background(text)
 
     def click_orig(self):
         self.text_box.config(state=tk.NORMAL)
@@ -161,6 +174,13 @@ class TextApp:
         self.text_box.insert(tk.END, text)
         self.text_box.config(state=tk.DISABLED)
 
+    def set_context(self, text):
+        # print("Callback called -> set text to:", text)
+        # print("Callback called -> set text to:", text[0 : min(20, len(text))])
+        print("[GUI] Received context " + text)
+        self.personalizer.set_context(text)
+        self.enable_widgets()
+
     def open_file(self):
         filepath = filedialog.askopenfilename(
             title="Select a file",
@@ -178,7 +198,13 @@ class TextApp:
                 print("[GUI]: Send text sent to personalizer.")
                 self.disable_widgets()
                 self.personalizer = Personalizer(content)
-                self.personalizer.query_styled_selection(callback=self.set_main_text)
+                self.text_box.config(state=tk.NORMAL)
+                self.text_box.delete(1.0, tk.END)
+                self.text_box.insert(tk.END, self.personalizer.section)
+                self.text_box.config(state=tk.DISABLED)
+
+                self.personalizer.query_top_level_context(callback=self.set_context)
+                # self.personalizer.query_styled_selection(callback=self.set_main_text)
 
             # self.text_box.insert(tk.END, file.read())
 
