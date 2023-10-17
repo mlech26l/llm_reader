@@ -25,7 +25,7 @@ class TTS:
             # self.voice_preset = "v2/en_speaker_6"
 
 
-        MAX_LENGTH = 100
+        MAX_LENGTH = 50
         text = text[:min(MAX_LENGTH, len(text))]
         # inputs = self.processor(text, voice_preset=self.voice_preset)
         inputs = self.processor(text)

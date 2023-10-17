@@ -103,7 +103,7 @@ class Personalizer:
     def advance_end_pointer(self):
         words = 0
         chars = 0
-        while self.pointer_end < len(self.content) and words < 300 and chars < 40000:
+        while self.pointer_end < len(self.content) and words < 1000 and chars < 40000:
             if self.content[self.pointer_end] == " ":
                 words += 1
             self.pointer_end += 1
